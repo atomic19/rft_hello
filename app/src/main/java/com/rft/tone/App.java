@@ -3,12 +3,65 @@
  */
 package com.rft.tone;
 
+import com.rft.tone.timer.RTimer;
+import com.rft.tone.timer.RTimerCallback;
+import lombok.extern.log4j.Log4j2;
+import org.apache.commons.cli.*;
+
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Random;
+
+@Log4j2
 public class App {
-    public String getGreeting() {
-        return "Hello World!";
+
+    // start from here
+    private static final int MIN_TIMER_SEC = 10;
+
+    // reach till here
+    private static final int MAX_TIMER_SEC = 20;
+
+    // keeps this amount of gap between each client
+    // keep this easily divisible and the (MAX-MIN) * GAP >= clients
+    private static final int GAP_IN_BETWEEN_SEC = 5;
+
+    public static void main(String[] args) throws ParseException, InterruptedException {
+        CommandLineParser parser = new DefaultParser();
+        Options options = new Options();
+        options.addOption("name", true,"name of the client");
+        CommandLine cmd = parser.parse(options, args);
+
+        if (cmd.hasOption("name")) {
+            Random random = new Random(Math.abs(cmd.getOptionValue("name").hashCode()));
+            ArrayList<Integer> possibleValues = getPossibleValues();
+            int timeoutInSeconds = possibleValues.get(random.nextInt(possibleValues.size()));
+            App.log.info("picked timeout in seconds: {}", timeoutInSeconds);
+            RTimer timer = RTimer.getInstance(Duration.ofSeconds(timeoutInSeconds), new RTimerCallback());
+            timer.start();
+        } else {
+            throw new IllegalArgumentException("Need name as input parameter, use -name 'name-of-the-client' ");
+        }
+
+        App.keepRunning();
     }
 
-    public static void main(String[] args) {
-        System.out.println(new App().getGreeting());
+    private static ArrayList<Integer> getPossibleValues() {
+        ArrayList<Integer> values = new ArrayList<Integer>();
+        for (int i = MIN_TIMER_SEC; i <= MAX_TIMER_SEC; i += GAP_IN_BETWEEN_SEC) {
+            values.add(i);
+        }
+        return values;
+    }
+
+    private static void keepRunning() throws InterruptedException {
+
+        Object lock = new Object();
+        //noinspection SynchronizationOnLocalVariableOrMethodParameter
+        synchronized (lock) {
+            while (true) {
+                lock.wait();
+            }
+        }
+
     }
 }
