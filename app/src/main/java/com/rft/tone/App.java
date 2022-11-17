@@ -3,46 +3,77 @@
  */
 package com.rft.tone;
 
-import com.rft.tone.timer.RTimer;
-import com.rft.tone.timer.RTimerCallback;
+import com.rft.tone.config.Configuration;
+import com.rft.tone.config.HostConfig;
+import com.rft.tone.srv.LeaderFollower;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigBeanFactory;
+import com.typesafe.config.ConfigFactory;
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.cli.*;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.Options;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.stream.IntStream;
 
 @Log4j2
 public class App {
 
     // start from here
-    private static final int MIN_TIMER_SEC = 10;
+    private static final int MIN_TIMER_SEC = 1;
 
     // reach till here
-    private static final int MAX_TIMER_SEC = 20;
+    private static final int MAX_TIMER_SEC = 10;
 
     // keeps this amount of gap between each client
     // keep this easily divisible and the (MAX-MIN) * GAP >= clients
-    private static final int GAP_IN_BETWEEN_SEC = 5;
+    private static final int GAP_IN_BETWEEN_SEC = 3;
 
-    public static void main(String[] args) throws ParseException, InterruptedException {
+    public static void main(String[] args) throws Exception {
         CommandLineParser parser = new DefaultParser();
         Options options = new Options();
-        options.addOption("name", true,"name of the client");
+        options.addOption("name", true,"name of the server");
+        options.addOption("idx", true, "index of server from the servers file");
         CommandLine cmd = parser.parse(options, args);
 
-        if (cmd.hasOption("name")) {
-            Random random = new Random(Math.abs(cmd.getOptionValue("name").hashCode()));
+        if (cmd.hasOption("name") && cmd.hasOption("idx")) {
+            int index = Integer.parseInt(cmd.getOptionValue("idx"));
+            String name = cmd.getOptionValue("name");
+            Random random = new Random(Math.abs(name.hashCode()));
             ArrayList<Integer> possibleValues = getPossibleValues();
             int timeoutInSeconds = possibleValues.get(random.nextInt(possibleValues.size()));
             App.log.info("picked timeout in seconds: {}", timeoutInSeconds);
-            RTimer timer = RTimer.getInstance(Duration.ofSeconds(timeoutInSeconds), new RTimerCallback());
-            timer.start();
+
+            Configuration config = App.readConfig();
+            HostConfig selfHostConfig = null;
+
+            ArrayList<HostConfig> others = new ArrayList<>();
+
+            for(int i : IntStream.range(0, config.getHosts().size()).toArray()) {
+                if(i == index) {
+                    selfHostConfig = config.getHosts().get(i);
+                } else {
+                    others.add(config.getHosts().get(i));
+                }
+            }
+
+            assert selfHostConfig != null;
+
+            LeaderFollower.start(selfHostConfig, others, timeoutInSeconds);
+
         } else {
-            throw new IllegalArgumentException("Need name as input parameter, use -name 'name-of-the-client' ");
+            throw new IllegalArgumentException("Need name and port as input parameter, use -name 'name-of-the-client' -idx index");
         }
 
         App.keepRunning();
+    }
+
+    private static Configuration readConfig() {
+        Config config = ConfigFactory.load("hosts");
+        return ConfigBeanFactory.create(config, Configuration.class);
     }
 
     private static ArrayList<Integer> getPossibleValues() {

@@ -1,4 +1,4 @@
-package com.rft.tone.timer.interfaces;
+package com.rft.tone.srv.interfaces;
 
 public interface RTimerInt {
     void start();

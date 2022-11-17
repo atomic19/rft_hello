@@ -1,7 +1,7 @@
-package com.rft.tone.timer;
+package com.rft.tone.srv.timer;
 
-import com.rft.tone.timer.interfaces.RTimerInt;
-import com.rft.tone.timer.interfaces.RTimerCallbackInt;
+import com.rft.tone.srv.interfaces.RTimerCallbackInt;
+import com.rft.tone.srv.interfaces.RTimerInt;
 import lombok.Data;
 
 import java.time.Duration;
