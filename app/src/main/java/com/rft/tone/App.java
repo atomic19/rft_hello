@@ -23,6 +23,12 @@ import java.util.stream.IntStream;
 @Log4j2
 public class App {
 
+    // used to test,
+    // if > 0, leader will fail to send an ack and see how the leader is changed
+    // if 0 nothing happens
+    // if >= 100 always fails, please don't do that
+    public static int FailAsALeaderPercent = 0;
+
     public static int LEADER_TIMEOUT_IN_SECONDS;
 
     public static int FOLLOWER_TIMEOUT_IN_SECONDS;
@@ -31,7 +37,7 @@ public class App {
     private static final int MIN_TIMER_SEC = 2;
 
     // reach till here
-    private static final int MAX_TIMER_SEC = 11;
+    private static final int MAX_TIMER_SEC = 14;
 
     // keeps this amount of gap between each client
     // keep this easily divisible and the (MAX-MIN) * GAP >= clients
@@ -48,6 +54,7 @@ public class App {
             ArrayList<Integer> possibleValues = getPossibleValues();
             int timeoutInSeconds = possibleValues.get(index+1);
             LEADER_TIMEOUT_IN_SECONDS = possibleValues.get(0);
+            FOLLOWER_TIMEOUT_IN_SECONDS = timeoutInSeconds;
 
             Configuration config = App.readConfig();
             HostConfig selfHostConfig = null;
