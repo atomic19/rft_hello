@@ -3,12 +3,9 @@ package com.rft.tone.srv.lf;
 import com.rft.tone.srv.Host;
 import com.rft.tone.srv.interfaces.ClientConnectionsHandler;
 import com.rft.tone.srv.interfaces.OnMessageCallback;
-import com.rft.tone.srv.interfaces.RTimer;
-import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 
-import java.net.InetSocketAddress;
 import java.util.List;
 
 public class SenderReceiver {
@@ -25,12 +22,16 @@ public class SenderReceiver {
     public void start(List<Host> others,
                       ClientConnectionsHandler clientConnectionsHandler,
                       OnMessageCallback onMessageCallback) {
-        SenderConnectionRunner senderConnectionRunner = new SenderConnectionRunner(
-                workerGroup,
-                clientConnectionsHandler,
-                onMessageCallback,
-                others);
-        new Thread(senderConnectionRunner).start();
+
+        for (Host other : others) {
+            SenderConnectionRunner senderConnectionRunner = new SenderConnectionRunner(
+                    this.self,
+                    workerGroup,
+                    clientConnectionsHandler,
+                    onMessageCallback,
+                    other);
+            new Thread(senderConnectionRunner).start();
+        }
 
         ReceiverRunner receiverRunner = new ReceiverRunner(
                 this.self,
@@ -39,10 +40,5 @@ public class SenderReceiver {
                 clientConnectionsHandler,
                 onMessageCallback);
         new Thread(receiverRunner).start();
-    }
-
-    public static Host getHostFromChannel(Channel channel) {
-        InetSocketAddress address = (InetSocketAddress) channel.remoteAddress();
-        return new Host(address.getAddress().getHostAddress(), address.getPort());
     }
 }

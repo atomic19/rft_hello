@@ -46,9 +46,6 @@ public class App {
             Random random = new Random();
             ArrayList<Integer> possibleValues = getPossibleValues();
             int timeoutInSeconds = possibleValues.get(index);
-            log.info("***********");
-            log.info("picked timeout in seconds: {} from possible: {}", timeoutInSeconds, Arrays.toString(possibleValues.toArray()));
-            log.info("***********");
 
             Configuration config = App.readConfig();
             HostConfig selfHostConfig = null;
@@ -64,6 +61,12 @@ public class App {
             }
 
             assert selfHostConfig != null;
+
+            log.info("***********");
+            log.info("picked timeout in seconds: {} from possible: {}", timeoutInSeconds, Arrays.toString(possibleValues.toArray()));
+            log.info("SELF: {}", selfHostConfig);
+            log.info("OTHERS: {}", Arrays.toString(others.toArray()));
+            log.info("***********");
 
             LeaderFollower.start(selfHostConfig, others, timeoutInSeconds);
 

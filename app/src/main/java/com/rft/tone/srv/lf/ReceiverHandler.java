@@ -12,33 +12,44 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class ReceiverHandler extends ChannelInboundHandlerAdapter {
 
+    private Host host = null;
+    private final Host self;
     private final OnMessageCallback onMessageCallbackInt;
     private final ClientConnectionsHandler clientConnectionsHandler;
 
     public ReceiverHandler(
+            Host self,
             ClientConnectionsHandler clientConnectionsHandler,
             OnMessageCallback onMessageCallbackInt) {
+        this.self = self;
         this.clientConnectionsHandler = clientConnectionsHandler;
         this.onMessageCallbackInt = onMessageCallbackInt;
     }
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        Host host = SenderReceiver.getHostFromChannel(ctx.channel());
-        this.clientConnectionsHandler.onChannelActive(host, ctx.channel());
+        log.info("{} Active Channel but not adding", this.self);
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        Host host = SenderReceiver.getHostFromChannel(ctx.channel());
-        this.clientConnectionsHandler.onChannelInActive(host, ctx.channel());
+        if(this.host != null) {
+            this.clientConnectionsHandler.onChannelInActive(host, ctx.channel());
+        }
     }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
-        Host host = SenderReceiver.getHostFromChannel(ctx.channel());
         Request req = (Request) msg;
-        this.onMessageCallbackInt.onMessage(req, host);
+        log.info("{} Message: {}", this.self, req);
+        if (req.getRequestType() == Request.RequestType.NEW_SERVER) {
+            this.host = req.getOrigin();
+            this.clientConnectionsHandler.onChannelActive(this.host, ctx.channel());
+        } else if (this.host != null) {
+            this.onMessageCallbackInt.onMessage(req, this.host);
+        } else {
+            ctx.close();
+        }
     }
 
     @Override

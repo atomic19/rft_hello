@@ -17,7 +17,7 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public class ReceiverRunner implements Runnable {
-    private final Host host;
+    private final Host self;
 
     private final EventLoopGroup bossGroup;
     private final EventLoopGroup workerGroup;
@@ -26,12 +26,12 @@ public class ReceiverRunner implements Runnable {
     private final ClientConnectionsHandler clientConnectionsHandler;
 
     public ReceiverRunner(
-            Host host,
+            Host self,
             EventLoopGroup workerGroup,
             EventLoopGroup bossGroup,
             ClientConnectionsHandler clientConnectionsHandler,
             OnMessageCallback onMessageCallback) {
-        this.host = host;
+        this.self = self;
         this.workerGroup = workerGroup;
         this.bossGroup = bossGroup;
         this.onMessageCallback = onMessageCallback;
@@ -49,7 +49,7 @@ public class ReceiverRunner implements Runnable {
                             ch.pipeline().addLast(
                                     new ObjectEncoder(),
                                     new ObjectDecoder(ClassResolvers.cacheDisabled(null)),
-                                    new ReceiverHandler(clientConnectionsHandler, onMessageCallback)
+                                    new ReceiverHandler(self, clientConnectionsHandler, onMessageCallback)
                             );
                         }
                     })
@@ -58,10 +58,10 @@ public class ReceiverRunner implements Runnable {
 
         ChannelFuture f = null;
         try {
-            f = b.bind(this.host.getPort()).sync();
+            f = b.bind(this.self.getPort()).sync();
             ChannelFuture future = f.channel().closeFuture();
             log.info("*********");
-            log.info("Server started at: {}", host);
+            log.info("Server started at: {}", self);
             log.info("*********");
             future.sync();
         } catch (InterruptedException e) {

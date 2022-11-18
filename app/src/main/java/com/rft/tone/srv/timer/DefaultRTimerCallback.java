@@ -26,8 +26,8 @@ public class DefaultRTimerCallback implements RTimerCallback {
 
     @Override
     public void onTime() {
-        log.info("[{}] ON TIME: {}", this.self, this.timeoutInSeconds);
-        Request request = new Request(Request.RequestType.ACK, RTerm.getTerm());
+        // log.info("[{}] ON TIME: {}", this.self, this.timeoutInSeconds);
+        Request request = new Request(Request.RequestType.ACK, RTerm.getTerm(), this.self);
         this.sendMessages.sendMessage(request);
     }
 }

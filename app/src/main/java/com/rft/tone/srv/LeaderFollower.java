@@ -21,7 +21,7 @@ public class LeaderFollower {
         Host self = new Host(selfConfig.getName(), selfConfig.getPort());
 
         SenderReceiver senderReceiver = new SenderReceiver(self);
-        ClientConnectionsHandler clientConnectionsHandler = new AllHostsClientConnectionsHandler();
+        ClientConnectionsHandler clientConnectionsHandler = new AllHostsClientConnectionsHandler(self);
         SendMessages sendMessagesInt = new DefaultSendMessage(clientConnectionsHandler);
 
         DefaultRTimer timer = DefaultRTimer.getInstance(
