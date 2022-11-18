@@ -14,5 +14,4 @@ public class Request implements Serializable {
 
     private final RequestType requestType;
     private final long term;
-    private final Host self;
 }

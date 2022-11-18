@@ -2,6 +2,6 @@ package com.rft.tone.srv.interfaces;
 
 import com.rft.tone.srv.Request;
 
-public interface SendMessagesInt {
+public interface SendMessages {
     void sendMessage(Request request);
 }

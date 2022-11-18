@@ -1,35 +1,35 @@
 package com.rft.tone.srv.timer;
 
-import com.rft.tone.srv.interfaces.RTimerCallbackInt;
-import com.rft.tone.srv.interfaces.RTimerInt;
+import com.rft.tone.srv.interfaces.RTimerCallback;
+import com.rft.tone.srv.interfaces.RTimer;
 import lombok.Data;
 
 import java.time.Duration;
 import java.util.Timer;
 
 @Data
-public class RTimer implements RTimerInt {
+public class DefaultRTimer implements RTimer {
 
     private volatile Timer timer;
-    private final RTimerCallbackInt callback;
+    private final RTimerCallback callback;
     private final long timerInMs;
     private final Object rTimerLock = new Object();
 
-    private RTimer(long timerInMs, RTimerCallbackInt callback) {
+    private DefaultRTimer(long timerInMs, RTimerCallback callback) {
         this.callback = callback;
         this.timerInMs = timerInMs;
     }
 
-    private volatile static RTimer instance;
+    private volatile static DefaultRTimer instance;
     private static final Object rTimerInstanceLock = new Object();
 
-    public static RTimer getInstance(Duration duration, RTimerCallbackInt callback) {
-        RTimer result = instance;
+    public static DefaultRTimer getInstance(Duration duration, RTimerCallback callback) {
+        DefaultRTimer result = instance;
         if (result == null) {
             synchronized (rTimerInstanceLock) {
                 result = instance;
                 if (result == null) {
-                    result = instance = new RTimer(duration.toMillis(), callback);
+                    result = instance = new DefaultRTimer(duration.toMillis(), callback);
                 }
             }
         }
@@ -56,7 +56,7 @@ public class RTimer implements RTimerInt {
                 res = this.timer;
                 if (res == null) {
                     this.timer = new Timer(true);
-                    this.timer.scheduleAtFixedRate(new RTimerTask(this.callback), 0, this.timerInMs);
+                    this.timer.scheduleAtFixedRate(new DefaultRTimerTask(this.callback), this.timerInMs, this.timerInMs);
                     created = true;
                 }
             }
@@ -72,7 +72,7 @@ public class RTimer implements RTimerInt {
                 if (res != null) {
                     this.timer.cancel();
                     res = this.timer = new Timer(true);
-                    this.timer.scheduleAtFixedRate(new RTimerTask(this.callback), 0, this.timerInMs);
+                    this.timer.scheduleAtFixedRate(new DefaultRTimerTask(this.callback), this.timerInMs, this.timerInMs);
                 }
             }
         }

@@ -1,6 +1,6 @@
 package com.rft.tone.srv.interfaces;
 
-public interface RTimerInt {
+public interface RTimer {
     void start();
     void reset();
 }

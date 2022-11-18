@@ -16,6 +16,7 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 import java.util.stream.IntStream;
 
@@ -23,10 +24,10 @@ import java.util.stream.IntStream;
 public class App {
 
     // start from here
-    private static final int MIN_TIMER_SEC = 1;
+    private static final int MIN_TIMER_SEC = 2;
 
     // reach till here
-    private static final int MAX_TIMER_SEC = 10;
+    private static final int MAX_TIMER_SEC = 11;
 
     // keeps this amount of gap between each client
     // keep this easily divisible and the (MAX-MIN) * GAP >= clients
@@ -42,10 +43,12 @@ public class App {
         if (cmd.hasOption("name") && cmd.hasOption("idx")) {
             int index = Integer.parseInt(cmd.getOptionValue("idx"));
             String name = cmd.getOptionValue("name");
-            Random random = new Random(Math.abs(name.hashCode()));
+            Random random = new Random();
             ArrayList<Integer> possibleValues = getPossibleValues();
-            int timeoutInSeconds = possibleValues.get(random.nextInt(possibleValues.size()));
-            App.log.info("picked timeout in seconds: {}", timeoutInSeconds);
+            int timeoutInSeconds = possibleValues.get(index);
+            log.info("***********");
+            log.info("picked timeout in seconds: {} from possible: {}", timeoutInSeconds, Arrays.toString(possibleValues.toArray()));
+            log.info("***********");
 
             Configuration config = App.readConfig();
             HostConfig selfHostConfig = null;

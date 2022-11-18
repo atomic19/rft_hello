@@ -1,7 +1,8 @@
 package com.rft.tone.srv.lf;
 
-import com.rft.tone.config.HostConfig;
-import com.rft.tone.srv.interfaces.OnMessageCallbackInt;
+import com.rft.tone.srv.Host;
+import com.rft.tone.srv.interfaces.ClientConnectionsHandler;
+import com.rft.tone.srv.interfaces.OnMessageCallback;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -16,21 +17,25 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public class ReceiverRunner implements Runnable {
-    private final HostConfig host;
+    private final Host host;
 
     private final EventLoopGroup bossGroup;
     private final EventLoopGroup workerGroup;
-    private final OnMessageCallbackInt onMessageCallbackInt;
+    private final OnMessageCallback onMessageCallback;
+
+    private final ClientConnectionsHandler clientConnectionsHandler;
 
     public ReceiverRunner(
-            HostConfig host,
+            Host host,
             EventLoopGroup workerGroup,
             EventLoopGroup bossGroup,
-            OnMessageCallbackInt onMessageCallbackInt) {
+            ClientConnectionsHandler clientConnectionsHandler,
+            OnMessageCallback onMessageCallback) {
         this.host = host;
         this.workerGroup = workerGroup;
         this.bossGroup = bossGroup;
-        this.onMessageCallbackInt = onMessageCallbackInt;
+        this.onMessageCallback = onMessageCallback;
+        this.clientConnectionsHandler = clientConnectionsHandler;
     }
 
     @Override
@@ -44,7 +49,7 @@ public class ReceiverRunner implements Runnable {
                             ch.pipeline().addLast(
                                     new ObjectEncoder(),
                                     new ObjectDecoder(ClassResolvers.cacheDisabled(null)),
-                                    new ReceiverHandler(onMessageCallbackInt)
+                                    new ReceiverHandler(clientConnectionsHandler, onMessageCallback)
                             );
                         }
                     })
@@ -56,7 +61,7 @@ public class ReceiverRunner implements Runnable {
             f = b.bind(this.host.getPort()).sync();
             ChannelFuture future = f.channel().closeFuture();
             log.info("*********");
-            log.info("Server started at: {}", f.channel().remoteAddress());
+            log.info("Server started at: {}", host);
             log.info("*********");
             future.sync();
         } catch (InterruptedException e) {

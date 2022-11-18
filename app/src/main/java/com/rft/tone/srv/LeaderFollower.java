@@ -1,21 +1,35 @@
 package com.rft.tone.srv;
 
 import com.rft.tone.config.HostConfig;
-import com.rft.tone.srv.interfaces.SendMessagesInt;
+import com.rft.tone.srv.interfaces.ClientConnectionsHandler;
+import com.rft.tone.srv.interfaces.OnMessageCallback;
+import com.rft.tone.srv.interfaces.SendMessages;
+import com.rft.tone.srv.lf.AllHostsClientConnectionsHandler;
+import com.rft.tone.srv.lf.DefaultSendMessage;
+import com.rft.tone.srv.lf.HostOnMessageCallback;
 import com.rft.tone.srv.lf.SenderReceiver;
-import com.rft.tone.srv.timer.RTimer;
-import com.rft.tone.srv.timer.RTimerCallback;
+import com.rft.tone.srv.timer.DefaultRTimer;
+import com.rft.tone.srv.timer.DefaultRTimerCallback;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class LeaderFollower {
-    public static void start(HostConfig self, List<HostConfig> others, int timeoutInSeconds) {
-        SenderReceiver senderReceiver = new SenderReceiver(new Host(self.getName(), self.getPort(), Host.Action.NO_ACTION));
-        SendMessagesInt sendMessagesInt = senderReceiver.createSenderRunner(others);
+    public static void start(HostConfig selfConfig, List<HostConfig> others, int timeoutInSeconds) {
+        List<Host> other = others.stream().map(e -> new Host(e.getName(), e.getPort())).collect(Collectors.toList());
+        Host self = new Host(selfConfig.getName(), selfConfig.getPort());
 
-        RTimer timer = RTimer.getInstance(Duration.ofSeconds(timeoutInSeconds), new RTimerCallback(sendMessagesInt));
-        senderReceiver.createReceiver(self, timer);
+        SenderReceiver senderReceiver = new SenderReceiver(self);
+        ClientConnectionsHandler clientConnectionsHandler = new AllHostsClientConnectionsHandler();
+        SendMessages sendMessagesInt = new DefaultSendMessage(clientConnectionsHandler);
+
+        DefaultRTimer timer = DefaultRTimer.getInstance(
+                Duration.ofSeconds(timeoutInSeconds),
+                new DefaultRTimerCallback(self, sendMessagesInt, timeoutInSeconds));
+
+        OnMessageCallback onMessageCallback = new HostOnMessageCallback(timer);
+        senderReceiver.start(other, clientConnectionsHandler, onMessageCallback);
         timer.start();
     }
 }
