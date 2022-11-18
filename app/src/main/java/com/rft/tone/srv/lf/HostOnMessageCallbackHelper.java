@@ -90,26 +90,34 @@ public class HostOnMessageCallbackHelper implements OnMessageCallback {
         if(request.getTerm() > RTerm.getTerm()) {
             // I got response for a vote with term greater than mine
             // but how is this magic possible
-            log.error("[{}] Black from host for VoteResponse: {}", this.self, request);
+            log.error("[{}] Black magic from a host for VoteResponse: {}", this.self, request);
         } else if(request.getTerm() < RTerm.getTerm()) {
             // I got response for a vote with term less than mine
             // this is old, I'm going to ignore this vote and stay as is
             log.info("[{}] got an old vote with VoteResponse: {}", this.self, request);
         } else {
             this.voteManager.getVoteResponse().put(request.getOrigin(), request.getVoteResponse());
-            if(this.voteManager.amILeader(this.self)) {
-                // I became the king
-                // I will update my timer
-                // and send an ACK immediately to claim my LEADER-ship;
-                this.myState = RState.LEADER;
-                Request req = new Request(Request.RequestType.ACK, RTerm.getTerm(), this.self);
-                this.sendMessages.sendMessage(req);
-                this.timer.updateTimer(Duration.ofSeconds(App.LEADER_TIMEOUT_IN_SECONDS));
-                log.info("*********************************************************");
-                log.info("LEADER ELECTED HERE: {} MyTerm: {}", self, RTerm.getTerm());
-                log.info("*********************************************************");
+            if (this.myState == RState.CANDIDATE) {
+                if(this.voteManager.amILeader(this.self)) {
+                    // I became the king
+                    // I will update my timer
+                    // and send an ACK immediately to claim my LEADER-ship;
+                    this.myState = RState.LEADER;
+                    Request req = new Request(Request.RequestType.ACK, RTerm.getTerm(), this.self);
+                    this.sendMessages.sendMessage(req);
+                    this.timer.updateTimer(Duration.ofSeconds(App.LEADER_TIMEOUT_IN_SECONDS));
+                    log.info("*********************************************************");
+                    log.info("LEADER ELECTED HERE: {} MyTerm: {}", self, RTerm.getTerm());
+                    log.info("*********************************************************");
+                } else {
+                    log.info("[{}] MyTerm: {} event after getting a vote, i'm not leader yet", self, RTerm.getTerm());
+                }
             } else {
-                log.info("[{}] MyTerm: {} event after getting a vote, i'm not leader yet", self, RTerm.getTerm());
+                // Although someone choose me as a leader
+                // So nice of him
+                // I already made my choice and will stick to my choice for now
+                log.info("[{}] MyTerm: {} someone voted for me, but i'm already {} " +
+                        "and not a candidate anymore", self, RTerm.getTerm(), myState);
             }
         }
     }
@@ -121,7 +129,7 @@ public class HostOnMessageCallbackHelper implements OnMessageCallback {
             log.info("[{}] a host {} is asking for my vote, but i refuse to give it as i'm ", this.self, request.getOrigin());
         } else  if (RTerm.getTerm() == request.getTerm()) {
             // Our terms are equal and someone is asking for a vote
-            // I should first check if I'm the leader,
+            // I should first check if I'm the leader
             if(myState == RState.LEADER) {
                 // If I'm the leader I will ignore this person
                 log.info("[{}] VoteForMe Case: i'm leader with same term, so ignore him", self);
@@ -143,6 +151,8 @@ public class HostOnMessageCallbackHelper implements OnMessageCallback {
             this.leader = null;
             // I myself will also become a candidate
             this.myState = RState.CANDIDATE;
+            // for good measure I will use my follower timeout
+            this.updateTermToThis(App.FOLLOWER_TIMEOUT_IN_SECONDS);
             // and also vote in this term
             this.voteAsNeeded(request);
         }
