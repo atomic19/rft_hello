@@ -47,7 +47,7 @@ public class SenderHandler extends ChannelInboundHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         log.info("Resetting timer i got message from server: {}", msg);
         Request req = (Request) msg;
-        this.onMessageCallback.onMessage(req, this.other);
+        this.onMessageCallback.onMessage(req);
     }
 
     @Override

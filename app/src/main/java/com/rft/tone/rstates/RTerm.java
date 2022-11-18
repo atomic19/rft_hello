@@ -1,21 +1,18 @@
 package com.rft.tone.rstates;
 
 import lombok.Data;
-import lombok.Synchronized;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 @Data
 public class RTerm {
-    private static final Object termLock = new Object();
-    private static long term = 1L;
+    private static AtomicLong term = new AtomicLong(1L);
 
-    @Synchronized("termLock")
     public static long getTerm() {
-        return RTerm.term;
+        return RTerm.term.get();
     }
 
-    @Synchronized("termLock")
-    public static long incTerm() {
-        RTerm.term += 1;
-        return RTerm.term;
+    public static void incTerm() {
+        RTerm.term.incrementAndGet();
     }
 }

@@ -46,7 +46,7 @@ public class ReceiverHandler extends ChannelInboundHandlerAdapter {
             this.host = req.getOrigin();
             this.clientConnectionsHandler.onChannelActive(this.host, ctx.channel());
         } else if (this.host != null) {
-            this.onMessageCallbackInt.onMessage(req, this.host);
+            this.onMessageCallbackInt.onMessage(req);
         } else {
             ctx.close();
         }

@@ -12,7 +12,7 @@ public class DefaultRTimer implements RTimer {
 
     private volatile Timer timer;
     private final RTimerCallback callback;
-    private final long timerInMs;
+    private long timerInMs;
     private final Object rTimerLock = new Object();
 
     private DefaultRTimer(long timerInMs, RTimerCallback callback) {
@@ -46,6 +46,12 @@ public class DefaultRTimer implements RTimer {
     @Override
     public void reset() {
         this.cancelCreateAndScheduleTimer();
+    }
+
+    @Override
+    public void updateTimer(Duration duration) {
+        this.timerInMs = duration.toMillis();
+        this.reset();
     }
 
     private boolean startAndScheduleTimer() {

@@ -28,7 +28,7 @@ public class LeaderFollower {
                 Duration.ofSeconds(timeoutInSeconds),
                 new DefaultRTimerCallback(self, sendMessagesInt, timeoutInSeconds));
 
-        OnMessageCallback onMessageCallback = new HostOnMessageCallback(timer);
+        OnMessageCallback onMessageCallback = new HostOnMessageCallback(self, timer);
         senderReceiver.start(other, clientConnectionsHandler, onMessageCallback);
         timer.start();
     }

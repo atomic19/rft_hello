@@ -23,6 +23,10 @@ import java.util.stream.IntStream;
 @Log4j2
 public class App {
 
+    public static int LEADER_TIMEOUT_IN_SECONDS;
+
+    public static int FOLLOWER_TIMEOUT_IN_SECONDS;
+
     // start from here
     private static final int MIN_TIMER_SEC = 2;
 
@@ -36,16 +40,14 @@ public class App {
     public static void main(String[] args) throws Exception {
         CommandLineParser parser = new DefaultParser();
         Options options = new Options();
-        options.addOption("name", true,"name of the server");
         options.addOption("idx", true, "index of server from the servers file");
         CommandLine cmd = parser.parse(options, args);
 
-        if (cmd.hasOption("name") && cmd.hasOption("idx")) {
+        if (cmd.hasOption("idx")) {
             int index = Integer.parseInt(cmd.getOptionValue("idx"));
-            String name = cmd.getOptionValue("name");
-            Random random = new Random();
             ArrayList<Integer> possibleValues = getPossibleValues();
-            int timeoutInSeconds = possibleValues.get(index);
+            int timeoutInSeconds = possibleValues.get(index+1);
+            LEADER_TIMEOUT_IN_SECONDS = possibleValues.get(0);
 
             Configuration config = App.readConfig();
             HostConfig selfHostConfig = null;
@@ -71,7 +73,7 @@ public class App {
             LeaderFollower.start(selfHostConfig, others, timeoutInSeconds);
 
         } else {
-            throw new IllegalArgumentException("Need name and port as input parameter, use -name 'name-of-the-client' -idx index");
+            throw new IllegalArgumentException("Need name and port as input parameter, use -idx index");
         }
 
         App.keepRunning();
