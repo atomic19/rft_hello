@@ -28,3 +28,4 @@ app/build/*
 .gradle2/*
 .gradle/
 .gradle/*
+*.dbx

@@ -10,4 +10,5 @@ import lombok.NoArgsConstructor;
 public class HostConfig {
     private String name;
     private int port;
+    private String dbName;
 }

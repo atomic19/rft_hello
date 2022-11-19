@@ -5,6 +5,7 @@ package com.rft.tone;
 
 import com.rft.tone.config.Configuration;
 import com.rft.tone.config.HostConfig;
+import com.rft.tone.db.SqlLiteCommandDb;
 import com.rft.tone.srv.LeaderFollower;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigBeanFactory;
@@ -34,10 +35,10 @@ public class App {
     public static int FOLLOWER_TIMEOUT_IN_SECONDS;
 
     // start from here
-    private static final int MIN_TIMER_SEC = 2;
+    public static final int MIN_TIMER_SEC = 2;
 
     // reach till here
-    private static final int MAX_TIMER_SEC = 14;
+    public static final int MAX_TIMER_SEC = 14;
 
     // keeps this amount of gap between each client
     // keep this easily divisible and the (MAX-MIN) * GAP >= clients
@@ -77,8 +78,10 @@ public class App {
             log.info("OTHERS: {}", Arrays.toString(others.toArray()));
             log.info("***********");
 
-            LeaderFollower.start(selfHostConfig, others, timeoutInSeconds);
-
+            try (SqlLiteCommandDb sqlLiteCommandDb = SqlLiteCommandDb.getInstance(selfHostConfig.getDbName())) {
+                LeaderFollower leaderFollower = LeaderFollower.getInstance(selfHostConfig, others, timeoutInSeconds);
+                leaderFollower.start();
+            }
         } else {
             throw new IllegalArgumentException("Need name and port as input parameter, use -idx index");
         }
